@@ -5,9 +5,7 @@
 R code used to perform main analysis for the article: Subglacial sediment export from an Alpine glacier DOI: [DOI](DOI)
 
 -   Using data shared on [Zenodo](Zenodo) repository.
-
 -   `renv` used for package management - `renv.lock`, `.RProfile` and `export.Rproj` provided.
-
 -   `run.R` loads data and calls custom functions for data analysis.
 
 ```         
@@ -17,7 +15,7 @@ R code used to perform main analysis for the article: Subglacial sediment export
 │   ├── export.csv
 │   ├── hydrographs.csv
 │   ├── meteo_daily.csv
-│   ├── otemma_outline_2021.gpkg
+│   ├── glacier_outline_2021.gpkg
 │   └── surface.tif
 ├── export.Rproj
 ├── functions
@@ -25,15 +23,8 @@ R code used to perform main analysis for the article: Subglacial sediment export
 │   ├── export_by_SLA_func.R
 │   ├── hysteresis_index_func.R
 │   └── shreve_func.R
-├── readme.txt
-├── renv
-│   ├── activate.R
-│   ├── library
-│   └── staging
 ├── renv.lock
 └── run.R
 ```
 
-
-
-CC BY licensing
+CC BY
