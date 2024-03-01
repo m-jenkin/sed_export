@@ -8,7 +8,7 @@ shreve_func <- function(glacier_outline, surface, bed, agg, dir) {
   c <- 1 # pressurization constant
 
   rast(surface) |>
-    mask(glacier_outline) |>
+    mask(glacier_outline, touches = T) |>
     aggregate(agg, fun = "mean") |>
     writeRaster(paste0(dir, "surface2.tif"), overwrite = T)
 
@@ -18,7 +18,7 @@ shreve_func <- function(glacier_outline, surface, bed, agg, dir) {
   )
 
   rast(bed) |>
-    mask(glacier_outline) |>
+    mask(glacier_outline, touches = T) |>
     aggregate(agg, fun = "mean") |>
     writeRaster(paste0(dir, "bed2.tif"), overwrite = T)
 
@@ -32,23 +32,23 @@ shreve_func <- function(glacier_outline, surface, bed, agg, dir) {
   thickness <- surface - bed
   shreve <- (pw * g * bed) + (c * ((pi * g) * (surface - bed)))
 
-  writeRaster(shreve, filename = paste0(dir, "shreve.tif"), overwrite = T)
+  writeRaster(shreve |> mask(glacier_outline), filename = paste0(dir, "shreve.tif"), overwrite = T)
 
   wbt_fill_depressions(
     dem = paste0(dir, "shreve.tif"),
     output = paste0(dir, "shreve.tif")
   )
 
-  wbt_fill_single_cell_pits(
-    dem = paste0(dir, "shreve.tif"),
-    output = paste0(dir, "shreve.tif")
-  )
+  # wbt_fill_single_cell_pits(
+  #   dem = paste0(dir, "shreve.tif"),
+  #   output = paste0(dir, "shreve.tif")
+  # )
 
   wbt_d8_flow_accumulation(
     input = paste0(dir, "shreve.tif"),
     output = paste0(dir, "shreve.tif"),
     out_type = "cells",
-    log = F
+    log = T
   )
 
   d8fa <- terra::rast("./data/temp/shreve.tif") |>

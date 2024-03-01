@@ -1,21 +1,24 @@
-# Matt Jenkin, University of Lausanne 2024
+#' ---
+#' title: Tracking coarse sediment in an Alpine subglacial channel
+#' author: Matt Jenkin
+#' date: Feb 2024
+#' format:
+#'   html:
+#'     self-contained: true
+#' execute:
+#'  warning: false
+#' ---
 
-# Load packages and custom functions --------------------------------------
-
-# install.packages('pacman')
 pacman::p_load(
   readr, tidyr, dplyr, stringr, forcats, purrr, ggplot2, fs,
   scales, GGally, caTools, sf, terra, whitebox, conflicted
 )
-conflict_prefer("extract", "terra")
-conflict_prefer("rescale", "scales")
-conflict_prefer("select", "dplyr")
 map(list.files("./functions/", full.names = T), source)
 
 # Read data and calculate daily summaries ---------------------------------
 
 glacier_area <- 7.907 # km2
-glacier_outline <- read_sf("./data/otemma_outline_2021.gpkg") |>
+glacier_outline <- read_sf("./data/glacier_outline_2021.gpkg") |>
   st_union() |>
   vect()
 
@@ -66,9 +69,10 @@ GS1 |> # check the hydrograph separation (done manually)
   select(year, JD, Qw) |>
   mutate(
     hydro = cut(JD, breaks = unique(sep$JD)), # splitting
-    hydro = as.factor(str_extract(hydro, "\\d+"))
+    hydro = as.numeric(str_extract(hydro, "\\d+"))
   ) |>
-  ggplot(aes(JD, Qw, col = hydro)) +
+  arrange(year, hydro) |>
+  ggplot(aes(JD, Qw, col = factor(hydro))) +
   geom_line(show.legend = F) +
   facet_wrap(~year, nrow = 3, scales = "free_y") +
   ggtitle("hydrograph splitting")
@@ -170,7 +174,7 @@ export_by_SLA <- export_by_SLA_func(
     GS1_daily |> rename("SLA" = SLA_min, "SCAR" = cover)
   },
   dem = "./data/surface.tif",
-  glacier_outline = "./data/otemma_outline_2021.gpkg",
+  glacier_outline = "./data/glacier_outline_2021.gpkg",
   band_width = band_width,
   hysteresis = HI
 )
@@ -194,7 +198,6 @@ ggplot(
 
 
 # Cumulative data with uncertainty -----------------------------------------
-
 
 cs_Qss <- GS1_daily |>
   group_by(year) |>
@@ -262,21 +265,25 @@ ggplot(cs_GS1, aes(x = day, group = var)) +
   geom_ribbon(aes(ymin = var_lo, ymax = var_hi, fill = year), alpha = 0.2) +
   geom_line(aes(y = var_value, color = year)) +
   facet_wrap(~ interaction(year, var), scales = "free", nrow = 4) +
-  ggtitle("Cumulative data with uncertainty ranges")
+  ggtitle("cumulative data with uncertainty ranges")
 
 # Subglacial channel flow routing - Shreve --------------------------------
 
 fs::dir_create("./data/temp/")
-shreve <- shreve_func(glacier_outline,
+
+shreve <- shreve_func(
+  glacier_outline,
   surface = "./data/surface.tif",
   bed = "./data/bed.tif",
   agg = 5, # downsampling
   dir = "./data/temp/"
-) # location for temp files
+)
 fs::dir_delete("./data/temp/")
 
 ggplot(shreve |> filter(value > 0)) +
-  geom_raster(aes(x, y, fill = log(value))) +
-  coord_fixed() +
+  geom_sf(data = glacier_outline |> st_as_sf(), fill = 'black') +
+  geom_tile(aes(x, y, fill = value)) +
+  coord_sf(datum = 2056) +
   scale_fill_viridis_c(option = "G") +
-  ggtitle("d8 flow accumulation based on hydraulic potential")
+  theme(axis.title = element_blank()) +
+  ggtitle("d8 flow accumulation in log m^2 based on hydraulic potential")

@@ -1,3 +1,6 @@
-source("renv/activate.R")
+source('renv/activate.R')
 library(conflicted)
 conflict_prefer_all('dplyr', quiet = T)
+conflict_prefer("extract", "terra", quiet = T)
+conflict_prefer("rescale", "scales", quiet = T)
+conflict_prefer("select", "dplyr", quiet = T)

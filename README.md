@@ -1,30 +1,36 @@
-**Author**: Matt Jenkin, University of Lausanne, Switzerland
+Author: Matt Jenkin, University of Lausanne, Switzerland ([mjenkin\@unil.ch](mailto:mjenkin@unil.ch))
 
-**Date**: Feb 2024
+Date: Feb 2024
 
-R code used to perform main analysis for the article: Subglacial sediment export from an Alpine glacier DOI: [DOI](DOI)
+Code and data used for the main analysis in the unpublished article: [Subglacial sediment export from an Alpine glacier ](---). The aim of sharing this code is to facilitate understanding and potential use of the main datasets published on [Zenodo](---) for modelling or comparative analyses. 
 
--   Using data shared on [Zenodo](Zenodo) repository.
--   `renv` used for package management - `renv.lock`, `.RProfile` and `export.Rproj` provided.
--   `run.R` loads data and calls custom functions for data analysis.
+For a quick glance, see `run.html` for the code and rendered output. Written in R mainly using the `tidyverse` package collection and `sf`, `terra` and `whitebox` for geospatial data. A `.Rproj` and a [`renv`](https://rstudio.github.io/renv/articles/renv.html) lockfile are provided for package version management. The code mainly generates statistical summaries and exploratory graphs, calculates a metric describing daily water-sediment hysteresis, and then performs the analyses relating sediment export to snow cover.
+
+------------------------------------------------------------------------
 
 ```         
 .
-├── data
-│   ├── bed.tif
-│   ├── export.csv
-│   ├── hydrographs.csv
-│   ├── meteo_daily.csv
-│   ├── glacier_outline_2021.gpkg
-│   └── surface.tif
-├── export.Rproj
-├── functions
-│   ├── entropy_func.R
-│   ├── export_by_SLA_func.R
-│   ├── hysteresis_index_func.R
-│   └── shreve_func.R
-├── renv.lock
-└── run.R
+└── sed_export
+    ├── README.md
+    ├── data
+    │   ├── bed.tif
+    │   ├── export.csv
+    │   ├── glacier_outline_2021.gpkg
+    │   ├── hydrographs.csv
+    │   ├── meteo_daily.csv
+    │   └── surface.tif
+    ├── export.Rproj
+    ├── functions
+    │   ├── entropy_func.R
+    │   ├── export_by_SLA_func.R
+    │   ├── hysteresis_index_func.R
+    │   └── shreve_func.R
+    ├── renv
+    │   ├── activate.R
+    │   ├── library
+    │   └── staging
+    ├── renv.lock
+    └── run.R
 ```
 
 CC BY
