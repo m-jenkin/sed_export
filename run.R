@@ -75,7 +75,7 @@ GS1_daily_long <- GS1_daily |>
 
 ggplot(GS1_daily_long, aes(day, value, col = year)) + # view all variables
   geom_point(pch = 3, size = 0.7) +
-  facet_wrap(~name, scales = "free_y") +
+  facet_wrap(~name, scales = "free_y", ncol = 3) +
   ggtitle("daily dataset")
 
 GS1 |> # check the hydrograph separation (done manually)
