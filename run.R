@@ -1,21 +1,35 @@
 #' ---
-#' title: Tracking coarse sediment in an Alpine subglacial channel
+#' title: Subglacial sediment export from an Alpine glacier
 #' author: Matt Jenkin
 #' date: Feb 2024
 #' format:
 #'   html:
-#'     self-contained: true
+#'    fig-width: 8
+#'    fig-height: 6
+#'    self-contained: true
 #' execute:
 #'  warning: false
 #' ---
 
+#' R script rendered with `knitr::spin`. No extensive formatting applied.
+
+#'
 pacman::p_load(
   readr, tidyr, dplyr, stringr, forcats, purrr, ggplot2, fs,
   scales, GGally, caTools, sf, terra, whitebox, conflicted
 )
+
+#'
+#| include: false
+#| echo: false
+
+conflict_prefer_all('dplyr', quiet = T)
+conflict_prefer("extract", "terra", quiet = T)
+conflict_prefer("rescale", "scales", quiet = T)
+conflict_prefer("select", "dplyr", quiet = T)
 map(list.files("./functions/", full.names = T), source)
 
-# Read data and calculate daily summaries ---------------------------------
+#' ## Data read and format
 
 glacier_area <- 7.907 # km2
 glacier_outline <- read_sf("./data/glacier_outline_2021.gpkg") |>
@@ -26,12 +40,12 @@ meteo_daily <- read_csv("./data/meteo_daily.csv") |>
   mutate(year = as.factor(year))
 
 GS1 <- read_csv("./data/export.csv") |>
-  filter((year == 2020 & day >= 189 & day <= 242) |
+  filter((year == 2020 & day >= 189 & day <= 242) | # selecting days used for analysis in the main article
     (year == 2021 & day >= 164 & day <= 252) |
     (year == 2022 & day >= 137 & day <= 243)) |>
   mutate(year = as.factor(year))
 
-GS1_daily <- GS1 |>
+GS1_daily <- GS1 |> # calculate daily summaries and join weather data
   mutate(across(c(Qw, Qw_lo, Qw_hi), ~ .x * (dt * 60))) |> # yield to flux
   group_by(year, day) |>
   summarise(across(contains(c("Qw", "Qss", "Qb")),
@@ -44,22 +58,22 @@ GS1_daily <- GS1 |>
     Qs_lo = Qss_lo + Qb_lo,
     Qs_hi = Qss_hi + Qb_hi
   ) |>
-  filter((year == 2020 & day >= 189 & day <= 242) | # days with reliable Qw, Qss and Qb
+  filter((year == 2020 & day >= 189 & day <= 242) | # selecting days used for analysis in the main article
     (year == 2021 & day >= 164 & day <= 252) |
     (year == 2022 & day >= 137 & day <= 243)) |>
   left_join(meteo_daily |> select(-date), by = c("year", "day")) |>
-  left_join(entropy_func(GS1)) |> # discharge entropy
+  left_join(entropy_func(GS1)) |> # function to compute discharge entropy
   mutate(entropy = rescale(entropy))
 
-sep <- read_csv("./data/hydrographs.csv") |>
+sep <- read_csv("./data/hydrographs.csv") |> # hydrograph breaks
   mutate(year = as.factor(year))
 
-# Data inspection ---------------------------------------------------------
-
+#' ## Data inspection
+#| echo: false
 GS1_daily_long <- GS1_daily |>
   pivot_longer(cols = !matches(c("year", "day")))
 
-ggplot(GS1_daily_long, aes(day, value, col = year)) + # all variables
+ggplot(GS1_daily_long, aes(day, value, col = year)) + # view all variables
   geom_point(pch = 3, size = 0.7) +
   facet_wrap(~name, scales = "free_y") +
   ggtitle("daily dataset")
@@ -77,9 +91,8 @@ GS1 |> # check the hydrograph separation (done manually)
   facet_wrap(~year, nrow = 3, scales = "free_y") +
   ggtitle("hydrograph splitting")
 
-# Melt season summary statistics ------------------------------------------
-
-# basin averaged totals
+#' ## Melt season summary statistics
+#' Basin averaged yields
 export_totals <- GS1 |>
   group_by(year) |>
   mutate(across(contains(c("Qw")), ~ .x * (dt * 60) / 10^6 / glacier_area)) |> # yield in million cumecs per km2
@@ -107,7 +120,7 @@ export_totals <- GS1 |>
   ) |>
   pivot_longer(cols = !matches("year"))
 
-# instantaneous flux
+#' Instantaneous flux
 flux_stats <- GS1 |>
   group_by(year) |>
   mutate(across(contains(c("Qss", "Qb")), ~ (.x * 10^3) / (dt * 60) / Qw)) |> # tons/dt to kg/s
@@ -128,7 +141,7 @@ flux_stats <- GS1 |>
   ) |>
   pivot_longer(cols = -year)
 
-# weather summaries for melt season and Apr-Sept
+#' Weather summaries for melt season and Apr-Sept
 meteo_summaries <- meteo_daily |>
   group_by(year) |>
   filter(day >= 105 & day <= 250 & mean_temp > 0) |>
@@ -144,9 +157,12 @@ meteo_summaries <- meteo_daily |>
       mean_mean_temp = mean(mean_temp, na.rm = T),
       mean_rainfall = mean(sum_precip, na.rm = T),
       sum_rainfall = sum(sum_precip, na.rm = T)
-    ))
+    ), by = 'year')
 
-# scatter matrix including Spearman correlations
+#' Scatter matrix including Spearman correlations
+#| echo: false
+#| fig-width: 7
+
 GS1_daily |>
   select(!contains(c("day", "lo", "hi", "date", "SLA", "cover"))) |>
   ggpairs(aes(colour = factor(year), alpha = 0.6),
@@ -155,9 +171,12 @@ GS1_daily |>
   ) +
   ggtitle("scatter matrix of daily data")
 
-# Water-sediment hysteresis -----------------------------------------------
+#' ## Water-sediment hysteresis
 
 HI <- hysteresis_func(GS1, sep)
+
+#'
+#| echo: false
 
 ggplot(HI) +
   geom_point(aes(x = day, y = var), colour = "darkgrey") +
@@ -165,9 +184,9 @@ ggplot(HI) +
   facet_wrap(~year, nrow = 3) +
   ggtitle("water-sediment hysteresis direction")
 
-# Export by SLA band ------------------------------------------------------
+#' ## Export by SLA band
 
-band_width <- 50
+band_width <- 50 # altitudinal range of each snow line altitude zonal estimate
 
 export_by_SLA <- export_by_SLA_func(
   data = {
@@ -179,13 +198,16 @@ export_by_SLA <- export_by_SLA_func(
   hysteresis = HI
 )
 
-snow_max <- GS1_daily |>
+snow_max <- GS1_daily |> # maximum altitude of the snow line in the monitored period
   filter((year == 2020 & day >= 189 & day <= 242) |
     (year == 2021 & day >= 164 & day <= 252) |
     (year == 2022 & day >= 137 & day <= 243)) |>
   group_by(year) |>
   mutate(year = as.factor(year)) |>
   summarise(max = max(SLA_min, na.rm = T))
+
+#'
+#| echo: false
 
 ggplot(
   export_by_SLA,
@@ -197,7 +219,7 @@ ggplot(
   ggtitle("sediment exported by SLA band")
 
 
-# Cumulative data with uncertainty -----------------------------------------
+#' ## Cumulative data with uncertainty
 
 cs_Qss <- GS1_daily |>
   group_by(year) |>
@@ -211,11 +233,15 @@ cs_Qss <- GS1_daily |>
   mutate(across(contains("Q"), ~ rescale(.x))) |>
   pivot_longer(cols = c("Qss_cs", "Qb_cs"), names_to = "var", values_to = "value")
 
+#'
+#| echo: false
+
 ggplot(cs_Qss, aes(Qw_cs, value, colour = year, lwd = day)) +
   geom_line() +
   facet_wrap(~var) +
   ggtitle("cumulative export by cumulative discharge")
 
+#' ## Percentage of export below 75th percentile water discharge
 p75 <- GS1 |>
   group_by(year) |>
   mutate(
@@ -245,6 +271,9 @@ proportions <- p75a |>
   select(year, proportion_Qss, proportion_Qb) |>
   pivot_longer(cols = !matches("year"))
 
+#'
+#| echo: false
+
 ggplot(proportions, aes(name, value, col = year)) +
   geom_point(pch = 3, size = 10, stroke = 3) +
   scale_y_continuous(limits = c(0, 1)) +
@@ -267,7 +296,7 @@ ggplot(cs_GS1, aes(x = day, group = var)) +
   facet_wrap(~ interaction(year, var), scales = "free", nrow = 4) +
   ggtitle("cumulative data with uncertainty ranges")
 
-# Subglacial channel flow routing - Shreve --------------------------------
+#' ## Subglacial channel flow routing - Shreve 1973
 
 fs::dir_create("./data/temp/")
 
@@ -280,6 +309,8 @@ shreve <- shreve_func(
 )
 fs::dir_delete("./data/temp/")
 
+#'
+#| echo: false
 ggplot(shreve |> filter(value > 0)) +
   geom_sf(data = glacier_outline |> st_as_sf(), fill = 'black') +
   geom_tile(aes(x, y, fill = value)) +

@@ -74,7 +74,7 @@ hysteresis_func <- function(GS1, hydro_sep) {
         bind_rows(t_Qw_max) |>
         drop_na()
       e <- floor(t_Qw_max$JD)
-      print(paste0(e, ".", y))
+      # print(paste0(e, ".", y))
     }
   }
 

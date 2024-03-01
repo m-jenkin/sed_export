@@ -12,6 +12,7 @@ For a quick glance, see `run.html` for the code and rendered output. Written in 
 .
 └── sed_export
     ├── README.md
+    ├── .Rprofile
     ├── data
     │   ├── bed.tif
     │   ├── export.csv
