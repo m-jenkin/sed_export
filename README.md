@@ -2,7 +2,7 @@ Author: Matt Jenkin, University of Lausanne, Switzerland ([mjenkin\@unil.ch](mai
 
 Date: Feb 2024
 
-Code and data used for the main analysis of glacier sediment export datasets in the unpublished article: [Subglacial sediment export from an Alpine glacier](---). The main export datasets are archived on [Zenodo](---). 
+Code and data used for the main analysis of glacier sediment export datasets in the unpublished article: [TITLE](---). The main export datasets are archived on [Zenodo](---). 
 
 For a quick glance, see `run.html` for the code and rendered output. Written in R mainly using the `tidyverse` package collection and `sf`, `terra` and `whitebox` for geospatial data. A `.Rproj` and a [`renv`](https://rstudio.github.io/renv/articles/renv.html) lockfile are provided for package version management. The code mainly generates statistical summaries and exploratory graphs, calculates a metric describing daily water-sediment hysteresis, and then performs analyses relating sediment export to snow cover. Shreve hydraulic potential analysis included.
 
